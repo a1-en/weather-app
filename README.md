@@ -27,7 +27,7 @@ npm install
 ```
 
 ### 3. Set Up Environment Variables
-- Go to [api.weatherapi.com](https://api.weatherapi.com/) and sign in to get your API key.
+- Go to [weatherapi.com](https://weatherapi.com/) and sign in to get your API key.
 - Create a `.env` file in the root directory and add your API key:
 
 ```sh
