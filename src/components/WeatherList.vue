@@ -60,9 +60,9 @@ const user = ref({
 
 const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-const openProfile = () => {
-  isProfileOpen.value = true;
-};
+// const openProfile = () => {
+//   isProfileOpen.value = true;
+// };
 const goToProfile = () => {
   // Navigate to a profile edit page or component
   router.push({ name: "ProfileEdit" });
