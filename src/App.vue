@@ -22,7 +22,7 @@ const isHomePage = route.name === 'Home';
 
 <style scoped>
 .container {
-  max-width: 350px;
+  max-width: 800px;
   margin: auto;
   text-align: center;
   padding: 20px;
