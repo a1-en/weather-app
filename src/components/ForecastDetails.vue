@@ -63,7 +63,7 @@ const getDayName = (date) => {
 const fetchWeatherData = async () => {
   try {
     const response = await axios.get(
-      `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${props.city}&days=3&aqi=no&alerts=no`
+      `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${props.city}&days=3&aqi=no&alerts=no`
     );
     forecast.value = response.data;
   } catch (error) {

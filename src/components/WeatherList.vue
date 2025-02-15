@@ -75,7 +75,7 @@ const showSuggestions = async () => {
   }
   try {
     const response = await axios.get(
-      `http://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${searchQuery.value}`
+      `https://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${searchQuery.value}`
     );
     suggestions.value = response.data.map((city: { name: string, country: string }) => `${city.name}, ${city.country}`);
   } catch (error) {
@@ -100,7 +100,7 @@ const addCityByName = async (city: string, showMessage: boolean = false) => {
   }
   try {
     const response = await axios.get(
-      `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`
+      `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`
     );
     
     weatherData.value = {
