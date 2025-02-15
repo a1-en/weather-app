@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import WeatherList from '../src/components/WeatherList.vue';
-import ForecastDetails from '../src/components/ForecastDetails.vue';
-import ProfileEdit from '../src/components/profile/ProfileEdit.vue'
+import WeatherList from '../components/WeatherList.vue';
+import ForecastDetails from '../components/ForecastDetails.vue';
+import ProfileEdit from '../components/profile/ProfileEdit.vue'
 const routes = [
   {
     path: '/',
