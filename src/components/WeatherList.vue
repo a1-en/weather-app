@@ -81,7 +81,7 @@ const showSuggestions = async () => {
     );
 
     // Remove cities that are already added
-    suggestions.value = allSuggestions.filter(city => !(city in weatherData.value));
+    suggestions.value = allSuggestions.filter((city:string) => !(city in weatherData.value));
 
   } catch (error) {
     console.error("Error fetching city suggestions:", error);
