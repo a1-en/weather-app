@@ -4,6 +4,7 @@
     <div class="profile-icon" @click="goToProfile">
       <span class="material-icons">person</span>
     </div>
+
     <div class="search-bar">
       <input 
         v-model="searchQuery" 
@@ -22,11 +23,10 @@
       </ul>
       <p v-if="message" class="message">{{ message }}</p>
     </div>
-    
+
     <div v-for="(weather, city) in weatherData" :key="city" class="weather-card" @click="goToForecast(city)">
       <div class="weather-info">
         <h2 class="location">{{ city }}</h2>
-
         <p class="time">{{ weather.time }}</p>
         <p class="condition">{{ weather.description }}</p>
       </div>
@@ -35,7 +35,7 @@
         <p class="high-low">H:{{ weather.high }}° L:{{ weather.low }}°</p>
       </div>
     </div>
-    
+
     <ProfileEdit v-if="isProfileOpen" :user="user" @close="isProfileOpen = false" />
   </div>
 </template>
@@ -48,8 +48,8 @@ import ProfileEdit from "./profile/ProfileEdit.vue";
 
 const router = useRouter();
 const searchQuery = ref("");
-const weatherData = ref<Record<string, any>>({});
-const suggestions = ref<string[]>([]);
+const weatherData = ref<Record<string, any>>({}); // Stores weather data for cities
+const suggestions = ref<string[]>([]); // Stores search suggestions
 const message = ref("");
 const isProfileOpen = ref(false);
 const user = ref({
@@ -60,61 +60,91 @@ const user = ref({
 
 const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-// const openProfile = () => {
-//   isProfileOpen.value = true;
-// };
 const goToProfile = () => {
-  // Navigate to a profile edit page or component
   router.push({ name: "ProfileEdit" });
 };
 
+// Show city suggestions (excluding already added cities)
 const showSuggestions = async () => {
   if (!searchQuery.value.trim()) {
     suggestions.value = [];
     return;
   }
+
   try {
     const response = await axios.get(
       `https://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${searchQuery.value}`
     );
-    suggestions.value = response.data.map((city: { name: string, country: string }) => `${city.name}, ${city.country}`);
+
+    const allSuggestions = response.data.map(
+      (city: { name: string; country: string }) => `${city.name}, ${city.country}`
+    );
+
+    // Remove cities that are already added
+    suggestions.value = allSuggestions.filter(city => !(city in weatherData.value));
+
   } catch (error) {
     console.error("Error fetching city suggestions:", error);
   }
 };
 
+// Add city manually when pressing Enter
 const addCity = async () => {
   if (!searchQuery.value.trim()) return;
-  const city = searchQuery.value.trim();
+  const [city, country] = searchQuery.value.split(", ").map(str => str.trim());
   searchQuery.value = "";
-  await addCityByName(city, true);
+  await addCityByName(city, country, true);
 };
 
-const addCityByName = async (city: string, showMessage: boolean = false) => {
-  if (weatherData.value[city]) {
+// Add city when clicking a suggestion and redirect
+const redirectToForecast = async (cityCountry: string) => {
+  suggestions.value = [];
+  searchQuery.value = "";
+
+  const [city, country] = cityCountry.split(", ").map(str => str.trim());
+
+  // Ensure city is added before navigating
+  await addCityByName(city, country, true);
+
+  setTimeout(() => {
+    router.push({ name: "ForecastDetails", params: { city } });
+  }, 500); // Small delay to ensure UI updates
+};
+
+// Function to add city to weatherData and persist in localStorage
+const addCityByName = async (city: string, country: string, showMessage: boolean = false) => {
+  if (!city || !country) return;
+  const cityKey = `${city}, ${country}`; // Store city and country together
+
+  if (weatherData.value[cityKey]) {
     if (showMessage) {
-      message.value = `${city} is already added!`;
+      message.value = `${cityKey} is already added!`;
       setTimeout(() => { message.value = ""; }, 2000);
     }
     return;
   }
+  
   try {
     const response = await axios.get(
       `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`
     );
-    
+
     weatherData.value = {
-      [city]: {
+      ...weatherData.value,
+      [cityKey]: {
         temp: response.data.current.temp_c,
-        high: response.data.forecast?.forecastday[0]?.day.maxtemp_c || response.data.current.temp_c,
-        low: response.data.forecast?.forecastday[0]?.day.mintemp_c || response.data.current.temp_c,
+        high: response.data.forecast?.forecastday?.[0]?.day.maxtemp_c || response.data.current.temp_c,
+        low: response.data.forecast?.forecastday?.[0]?.day.mintemp_c || response.data.current.temp_c,
         description: response.data.current.condition.text,
         time: new Date(response.data.location.localtime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      ...weatherData.value,
+      }
     };
+
+    // Save to localStorage
+    localStorage.setItem("weatherData", JSON.stringify(weatherData.value));
+
     if (showMessage) {
-      message.value = `${city} has been added!`;
+      message.value = `${cityKey} has been added!`;
       setTimeout(() => { message.value = ""; }, 2000);
     }
   } catch (error) {
@@ -122,25 +152,24 @@ const addCityByName = async (city: string, showMessage: boolean = false) => {
   }
 };
 
-const redirectToForecast = (city: string) => {
-  suggestions.value = []; // Clear suggestions
-  searchQuery.value = ""; // Reset search bar
-  router.push({ name: "ForecastDetails", params: { city } }); // Navigate to forecast page
-};
+// Load cities from localStorage on page load
+onMounted(() => {
+  const savedWeatherData = localStorage.getItem("weatherData");
+  if (savedWeatherData) {
+    weatherData.value = JSON.parse(savedWeatherData);
+  } else {
+    // Load default cities if no previous data is found
+    addCityByName("London", "UK", false);
+    addCityByName("Singapore", "Singapore", false);
+        addCityByName("Kuala Lumpur", "Malaysia", false);
 
+  }
+});
 
+// Navigate to forecast details page
 const goToForecast = (city: string) => {
   router.push({ name: "ForecastDetails", params: { city } });
 };
-
-onMounted(() => {
-      addCityByName("London", false);
-
-  addCityByName("Singapore", false);
-  addCityByName("Kuala Lumpur", false);
-
-});
-
 </script>
 <style scoped>
 .weather-container {
